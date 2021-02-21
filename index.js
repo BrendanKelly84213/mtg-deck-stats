@@ -1,4 +1,5 @@
 const mtg = require('mtgsdk');
+const parse = require('./parse.js');
 
 const testDeck = {
 	'goblin warchief': 16,
@@ -18,6 +19,18 @@ async function card(cardName) {
 // Card colors object 
 async function cardColors(cardName) {
 	const c = await card(cardName).catch(handleErr);
+
+	if(!c) {
+		console.log("Warning: card: " + cardName + " undefined");
+		return {
+			R: 0,
+			U: 0,
+			G: 0,
+			B: 0,
+			W: 0,
+			C: 0
+		};
+	}
 
 	const manaCost = c.manaCost;
 	const cmc = c.cmc;
@@ -52,10 +65,11 @@ async function deckColors(deck) {
 	const colorObjs = await Promise.all(
 		Object.keys(deck).map(async cardName => {
 			const numCards = deck[cardName];
+			console.log(cardName, numCards);
 			// Get the colors object for the card
 			const colors = await cardColors(cardName).catch(handleErr);
 			// Adjust for amount for each color and place in an array
-			const adjColorsArr = Object.values(colors).map(value => value * numCards);
+			const adjColorsArr = Object.values(colors).map(value => value * numCards) ;
 			// The total number of colors corresponding to the card
 			return {
 				R: adjColorsArr[0],
@@ -64,12 +78,12 @@ async function deckColors(deck) {
 				W: adjColorsArr[3],
 				B: adjColorsArr[4],
 				C: adjColorsArr[5]
-			};
+			} ;
 		})
 	);
 
 	// Looking now for the reduced colors object array. Sum but for objects
-	// I cannot believe this just works. God bless JavaScript 
+	// I cannot believe this just works
 	return colorObjs.reduce((acc, curr) => ({ 
 			R: acc.R + curr.R,
 			U: acc.U + curr.U,
@@ -82,7 +96,9 @@ async function deckColors(deck) {
 }
 
 (async () => { 
-	 const colors = await deckColors(testDeck);
-	 console.log(colors);
+	const control = parse.deck('sultai_control.txt');
+	console.log(control);
+	const colors = await deckColors(control);
+	console.log(colors);
 })();
 
